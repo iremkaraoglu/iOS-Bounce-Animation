@@ -9,7 +9,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var dotSize: CGFloat = 16.0
+    var dotSize: CGFloat = 14.0
     var labels: [UILabel] = []
     var rowWidth = 0.0
     var row: [UILabel] = []
@@ -25,20 +25,20 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         let label = UILabel()
         label.text = "Lorem"
-
+        
         let label1 = UILabel()
         label1.text = "Ipsum"
-
+        
         let label2 = UILabel()
         label2.text = "Dolor"
-
+        
         let label3 = UILabel()
         label3.text = "Sit"
-
+        
         let label4 = UILabel()
         label4.text = "Amet"
-
-
+        
+        
         var labelArray = [UILabel]()
         labelArray.append(label)
         labelArray.append(label1)
@@ -47,7 +47,7 @@ class ViewController: UIViewController {
         labelArray.append(label4)
         self.labels = labelArray
         super.viewDidLoad()
-        view.backgroundColor = UIColor(red: 236/255,  green: 240/255, blue: 158/255, alpha: 1)
+        view.backgroundColor = UIColor(red: 252/255,  green: 242/255, blue: 210/255, alpha: 1)
         addPlayButton()
         createRow()
         addDot()
@@ -56,13 +56,15 @@ class ViewController: UIViewController {
     func addPlayButton() {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.setTitle("Play animation", for: .normal)
-        button.backgroundColor = .lightGray
+        button.setTitle("Play", for: .normal)
+        //        button.backgroundColor = UIColor(red: 161/255, green: 158/255, blue: 148/255, alpha: 1)
+        button.layer.borderColor = UIColor(red: 161/255, green: 158/255, blue: 148/255, alpha: 1).cgColor
+        button.layer.borderWidth = 2
         button.setTitleColor(.black, for: .normal)
         button.layer.cornerRadius = 16
         view.addSubview(button)
         NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: 140),
+            button.widthAnchor.constraint(equalToConstant: 80),
             button.heightAnchor.constraint(equalToConstant: 56),
             button.topAnchor.constraint(equalTo: view.topAnchor, constant: 100),
             button.centerXAnchor.constraint(equalTo: view.centerXAnchor)
@@ -78,7 +80,7 @@ class ViewController: UIViewController {
     func addDot() {
         let ball = UIView()
         ball.layer.cornerRadius = dotSize/2
-        ball.backgroundColor = .black
+        ball.backgroundColor = UIColor(red: 242/255, green: 141/255, blue: 10/255, alpha: 1)
         ball.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(ball)
         self.dot = ball
@@ -97,15 +99,16 @@ class ViewController: UIViewController {
         var count = 0
         let path = UIBezierPath()
         var point = initialPoint
+        point.x = initialPoint.x + labelWidths[0]/2 - 10
         var previousLabelWidth = 10.0
         var deltaX = 0.0
         
-        for i in labels {
+        for _ in labels {
             if labelWidths.isEmpty {
                 break
             }
             
-            deltaX = (previousLabelWidth  + (8 * 2) + labelWidths[count])/2
+            deltaX = (previousLabelWidth  + (8*2) + labelWidths[count])/2
             
             if count == 0 {
                 path.move(to: point)
@@ -143,6 +146,12 @@ class ViewController: UIViewController {
     func startDotAnimation() {
         
         let path = createBezierPath()
+        let shapeLayer = CAShapeLayer()
+        shapeLayer.path = path?.cgPath
+        shapeLayer.fillColor = UIColor.systemPink.cgColor
+        shapeLayer.strokeColor = UIColor.brown.cgColor
+        shapeLayer.lineWidth = 3.0
+        view.layer.addSublayer(shapeLayer)
         
         let animation = CAKeyframeAnimation(keyPath: "position")
         animation.path = path?.cgPath
