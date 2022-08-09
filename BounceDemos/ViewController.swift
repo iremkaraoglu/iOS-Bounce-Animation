@@ -23,6 +23,10 @@ class ViewController: UIViewController {
     var dot: UIView?
     
     override func viewDidLoad() {
+        let value = UIInterfaceOrientation.portrait.rawValue
+        UIDevice.current.setValue(value, forKey: "orientation")
+        
+        
         let label = UILabel()
         label.text = "Lorem"
         
@@ -57,7 +61,6 @@ class ViewController: UIViewController {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("Play", for: .normal)
-        //        button.backgroundColor = UIColor(red: 161/255, green: 158/255, blue: 148/255, alpha: 1)
         button.layer.borderColor = UIColor(red: 161/255, green: 158/255, blue: 148/255, alpha: 1).cgColor
         button.layer.borderWidth = 2
         button.setTitleColor(.black, for: .normal)
@@ -66,7 +69,7 @@ class ViewController: UIViewController {
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: 80),
             button.heightAnchor.constraint(equalToConstant: 56),
-            button.topAnchor.constraint(equalTo: view.topAnchor, constant: 100),
+            button.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: 150),
             button.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
         button.addTarget(self, action: #selector(onPress), for: .touchUpInside)
@@ -91,8 +94,6 @@ class ViewController: UIViewController {
             ball.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: initialPoint.x),
             ball.topAnchor.constraint(equalTo: view.topAnchor, constant: initialPoint.y),
         ])
-        
-        
     }
     
     func createBezierPath() -> UIBezierPath? {
@@ -148,8 +149,8 @@ class ViewController: UIViewController {
         let path = createBezierPath()
         let shapeLayer = CAShapeLayer()
         shapeLayer.path = path?.cgPath
-        shapeLayer.fillColor = UIColor.systemPink.cgColor
-        shapeLayer.strokeColor = UIColor.brown.cgColor
+        shapeLayer.fillColor = UIColor(red: 222/255, green: 120/255, blue: 180/255, alpha: 0.3).cgColor
+        shapeLayer.strokeColor = UIColor(red: 222/255, green: 120/255, blue: 180/255, alpha: 0.9).cgColor
         shapeLayer.lineWidth = 3.0
         view.layer.addSublayer(shapeLayer)
         
@@ -176,22 +177,7 @@ class ViewController: UIViewController {
         self.dot?.layer.add(animation, forKey: "bezier")
         self.dot?.alpha = 1
         self.dot?.center = self.points.last!
-        
-        //        self.delay(seconds: 0.1) {
-        //            self.dot.layer.zPosition = 999
-        //            self.bringSubviewToFront(self.dot)
-        //            self.dot.alpha = 1
-        //        }
-        //
-        //        self.delay(seconds: animation.duration - 0.3) {
-        //            self.dot.alpha = 0
-        //        }
     }
-    
-    
-    
-    
-    
     
     // returns the width of a given UILabel
     func findWidthOfEachLabel(label: UILabel) -> CGFloat {
