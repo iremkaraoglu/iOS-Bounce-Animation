@@ -12,10 +12,8 @@ class ViewController: UIViewController {
     var dotSize: CGFloat = 14.0
     var labels: [UILabel] = []
     var rowWidth = 0.0
-    var row: [UILabel] = []
     var labelWidths: [CGFloat] = []
     var initialLabelWidth = 0.0
-    var startingPoint = CGPoint()
     var dotYvalue = 48.0
     var points = [CGPoint]()
     var durations = [CGFloat]()
@@ -23,34 +21,22 @@ class ViewController: UIViewController {
     var dot: UIView?
     
     override func viewDidLoad() {
+        /*
+         Bunu aslında project'in içinden Device Orientation ile de setleyebilirsin.
+         Özel bir sebebi var mıydı? Bu haliyle bu arada döndürülebiliyor.
+         Ama ilk başladığında hangi pozisyonda olmasını istiyorsan ona setleniyor. Döndürmeye çalıştığında dönebiliyor.
+         Burada yaşatmak istediğin deneyim neydi?
+        */
         let value = UIInterfaceOrientation.portrait.rawValue
         UIDevice.current.setValue(value, forKey: "orientation")
-        
-        
-        let label = UILabel()
-        label.text = "Lorem"
-        
-        let label1 = UILabel()
-        label1.text = "Ipsum"
-        
-        let label2 = UILabel()
-        label2.text = "Dolor"
-        
-        let label3 = UILabel()
-        label3.text = "Sit"
-        
-        let label4 = UILabel()
-        label4.text = "Amet"
-        
-        
-        var labelArray = [UILabel]()
-        labelArray.append(label)
-        labelArray.append(label1)
-        labelArray.append(label2)
-        labelArray.append(label3)
-        labelArray.append(label4)
-        self.labels = labelArray
         super.viewDidLoad()
+        
+        self.labels = ["Lorem", "Ipsum", "Dolor", "Sit", "Amet"].compactMap({
+            let label = UILabel()
+            label.text = $0
+            return label
+        })
+        
         view.backgroundColor = UIColor(red: 252/255,  green: 242/255, blue: 210/255, alpha: 1)
         addPlayButton()
         createRow()
@@ -66,19 +52,20 @@ class ViewController: UIViewController {
         button.setTitleColor(.black, for: .normal)
         button.layer.cornerRadius = 16
         view.addSubview(button)
+        
         NSLayoutConstraint.activate([
             button.widthAnchor.constraint(equalToConstant: 80),
             button.heightAnchor.constraint(equalToConstant: 56),
             button.bottomAnchor.constraint(equalTo: view.centerYAnchor, constant: 150),
             button.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
+        
         button.addTarget(self, action: #selector(onPress), for: .touchUpInside)
     }
     
     @objc func onPress() {
         startDotAnimation()
     }
-    
     
     func addDot() {
         let ball = UIView()
@@ -97,21 +84,21 @@ class ViewController: UIViewController {
     }
     
     func createBezierPath() -> UIBezierPath? {
-        var count = 0
+        // 91. satırda crash olur ve 102'de kontrol etmene gerek kalmaz. Bu yoksa zaten komple app gg.
+        
+        guard !labelWidths.isEmpty else { return nil }
+        
         let path = UIBezierPath()
         var point = initialPoint
         point.x = initialPoint.x + labelWidths[0]/2 - 10
         var previousLabelWidth = 10.0
         var deltaX = 0.0
         
-        for _ in labels {
-            if labelWidths.isEmpty {
-                break
-            }
+        
+        for index in 0..<labels.count {
+            deltaX = (previousLabelWidth  + (8*2) + labelWidths[index])/2
             
-            deltaX = (previousLabelWidth  + (8*2) + labelWidths[count])/2
-            
-            if count == 0 {
+            if index == 0 {
                 path.move(to: point)
             }
             
@@ -124,9 +111,8 @@ class ViewController: UIViewController {
             point = destination
             points.append(destination)
             path.addCurve(to: destination, controlPoint1: controlPoint1, controlPoint2: controlPoint2)
-            previousLabelWidth = labelWidths[count]
+            previousLabelWidth = labelWidths[index]
             durations.append(0.3)
-            count += 1
         }
         
         let controlPoint1 = CGPoint(x:  point.x + 30,
@@ -141,7 +127,6 @@ class ViewController: UIViewController {
         durations.append(0.3)
         
         return path
-        
     }
     
     func startDotAnimation() {
@@ -156,68 +141,60 @@ class ViewController: UIViewController {
         
         let animation = CAKeyframeAnimation(keyPath: "position")
         animation.path = path?.cgPath
-        animation.duration = durations.reduce(0, { partialResult, v in
-            return partialResult + v
-        })
-        var keyTimes: [NSNumber] = [0.0]
-        var cd = 0.0
-        var index = 0
-        for d in durations {
-            cd = cd + d
-            let xd = cd - d*0.5
-            var percent = xd / animation.duration as NSNumber
-            if index + 1 == durations.count{
-                percent = 1.0
-            }
-            keyTimes.append(percent)
-            index += 1
-        }
         
-        animation.keyTimes = keyTimes
+        animation.duration = durations.reduce(0, { partialResult, v in
+            partialResult + v
+        })
+                
+        // cd'nin anlamını anlamadım :(
+        var cd = 0.0
+        
+        let times: [NSNumber] = durations.enumerated().compactMap({ index, duration in
+            cd = cd + duration
+            let xd = cd - duration*0.5
+            return index + 1 == durations.count ? 1.0 : xd / animation.duration as NSNumber
+        })
+
+        animation.keyTimes = [0.0] + times
         self.dot?.layer.add(animation, forKey: "bezier")
         self.dot?.alpha = 1
+        
+        // May the force be with u not with code :d
         self.dot?.center = self.points.last!
     }
     
     // returns the width of a given UILabel
     func findWidthOfEachLabel(label: UILabel) -> CGFloat {
-        let width = label.text?.size(withAttributes:[.font: label.font]).width ?? 30
+        let width = label.text?.size(withAttributes:[.font: label.font as Any]).width ?? 30
         return width
     }
     
     func createRow() {
-        var count = 0
         rowWidth = 0.0
-        row.removeAll()
-        for l in labels {
-            l.constraints.forEach({$0.isActive = false})
-            let labelWidth = findWidthOfEachLabel(label: l)
-            labelWidths.append(labelWidth)
-            rowWidth += labelWidth
-            row.append(l)
-            if count == 0 {
-                initialLabelWidth = labelWidth
-            }
-            count += 1
-        }
+        
+        labelWidths = labels.compactMap({ label in
+            label.constraints.forEach({ $0.isActive = false })
+            let width = findWidthOfEachLabel(label: label)
+            rowWidth += width
+            return width
+        })
+        
+        initialLabelWidth = labelWidths.first ?? .zero
+
         let parentWidth = UIScreen.main.bounds.width
         initialPoint.x = (parentWidth - rowWidth)/2 - labelWidths[0]/2
         initialPoint.y = view.center.y - 20
         let topLeft: CGPoint = .init(x: (parentWidth - rowWidth)/2, y: initialPoint.y)
-        positionLabels(rowLabels: row,  labelWidths: labelWidths, rowStartPoint: topLeft)
-        
+        positionLabels(rowLabels: labels, rowStartPoint: topLeft)
     }
     
-    func positionLabels(rowLabels: [UILabel], labelWidths: [CGFloat], rowStartPoint: CGPoint) {
-        var count = 0
+    func positionLabels(rowLabels: [UILabel], rowStartPoint: CGPoint) {
         var deltaX = rowStartPoint.x
-        self.startingPoint = CGPoint(x: deltaX, y: rowStartPoint.y)
-        for l in rowLabels {
-            l.constraints.forEach({$0.isActive = false})
-            l.frame = CGRect(x: deltaX, y: rowStartPoint.y , width: labelWidths[count], height: 20)
-            deltaX = deltaX + 8 + labelWidths[count]
-            count += 1
-            view.addSubview(l)
+        
+        rowLabels.enumerated().forEach { index, label in
+            label.frame = CGRect(x: deltaX, y: rowStartPoint.y , width: labelWidths[index], height: 20)
+            deltaX = deltaX + 8 + labelWidths[index]
+            view.addSubview(label)
         }
     }
 }
