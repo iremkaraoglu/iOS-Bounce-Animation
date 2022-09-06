@@ -137,7 +137,6 @@ class ViewController: UIViewController {
             partialResult + v
         })
         
-        // cd'nin anlamını anlamadım :(
         var cd = 0.0
         
         let times: [NSNumber] = durations.enumerated().compactMap({ index, duration in
@@ -150,7 +149,6 @@ class ViewController: UIViewController {
         self.dot?.layer.add(animation, forKey: "bezier")
         self.dot?.alpha = 1
         
-        // May the force be with u not with code :d
         self.dot?.center = self.points.last!
         
     }
