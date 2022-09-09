@@ -16,11 +16,14 @@ class ViewController: UIViewController {
     var labelWidths: [CGFloat] = []
     var initialLabelWidth = 0.0
     var startingPoint = CGPoint()
-    var dotYvalue = 48.0
+    var dotYvalue: Double = 48.0
     var points = [CGPoint]()
     var durations = [CGFloat]()
     var initialPoint = CGPoint()
     var dot: UIView?
+    var space: Double = 8.0
+    var lastBounceX: Double = 60.0
+    
     
     override func viewDidLoad() {
         
@@ -35,6 +38,38 @@ class ViewController: UIViewController {
         addPlayButton()
         createRow()
         addDot()
+    }
+    
+    func createRow() {
+        rowWidth = 0.0
+        labelWidths = labels.compactMap({ label in
+            label.constraints.forEach({ $0.isActive = false })
+            let width = findWidthOfEachLabel(label: label)
+            rowWidth += width
+            return width
+        })
+        initialLabelWidth = labelWidths.first ?? .zero
+        let parentWidth = UIScreen.main.bounds.width
+        initialPoint.x = (parentWidth - rowWidth)/2 - labelWidths[0]/2
+        initialPoint.y = view.center.y - 20
+        let topLeft: CGPoint = .init(x: (parentWidth - rowWidth)/2, y: initialPoint.y)
+        positionLabels(rowLabels: labels, rowStartPoint: topLeft)
+        
+    }
+    
+    func positionLabels(rowLabels: [UILabel], rowStartPoint: CGPoint) {
+        var deltaX = rowStartPoint.x
+        rowLabels.enumerated().forEach { index, label in
+            label.frame = CGRect(x: deltaX, y: rowStartPoint.y , width: labelWidths[index], height: 20)
+            deltaX = deltaX + space + labelWidths[index]
+            view.addSubview(label)
+        }
+    }
+    
+    func findWidthOfEachLabel(label: UILabel) -> CGFloat {
+        // returns the width of a given UILabel
+        let width = label.text?.size(withAttributes:[.font: label.font as Any]).width ?? 30
+        return width
     }
     
     func addPlayButton() {
@@ -86,7 +121,7 @@ class ViewController: UIViewController {
         var deltaX = 0.0
         
         for index in 0..<labels.count {
-            deltaX = (previousLabelWidth  + (8*2) + labelWidths[index])/2
+            deltaX = (previousLabelWidth  + (space*2) + labelWidths[index])/2
             
             if index == 0 {
                 path.move(to: point)
@@ -104,12 +139,12 @@ class ViewController: UIViewController {
             previousLabelWidth = labelWidths[index]
             durations.append(0.3)
         }
-        
-        let controlPoint1 = CGPoint(x:  point.x + 30,
+        // last bounce
+        let controlPoint1 = CGPoint(x:  point.x + lastBounceX/2,
                                     y: point.y - dotYvalue)
-        let controlPoint2 = CGPoint(x:  point.x + 30,
+        let controlPoint2 = CGPoint(x:  point.x + lastBounceX/2,
                                     y: point.y - dotYvalue)
-        let destination = CGPoint(x:  point.x + 60,
+        let destination = CGPoint(x:  point.x + lastBounceX,
                                   y: point.y)
         point = destination
         points.append(destination)
@@ -120,15 +155,20 @@ class ViewController: UIViewController {
         
     }
     
-    func startDotAnimation() {
-        
-        let path = createBezierPath()
+    func showPath(_ path: UIBezierPath) {
         let shapeLayer = CAShapeLayer()
-        shapeLayer.path = path?.cgPath
+        shapeLayer.path = path.cgPath
         shapeLayer.fillColor = UIColor(red: 222/255, green: 120/255, blue: 180/255, alpha: 0.3).cgColor
         shapeLayer.strokeColor = UIColor(red: 222/255, green: 120/255, blue: 180/255, alpha: 0.9).cgColor
         shapeLayer.lineWidth = 3.0
         view.layer.addSublayer(shapeLayer)
+    }
+    
+    func startDotAnimation() {
+        
+        let path = createBezierPath()
+        
+        showPath(path!)
         
         let animation = CAKeyframeAnimation(keyPath: "position")
         animation.path = path?.cgPath
@@ -148,43 +188,8 @@ class ViewController: UIViewController {
         animation.keyTimes = [0.0] + times
         self.dot?.layer.add(animation, forKey: "bezier")
         self.dot?.alpha = 1
-        
         self.dot?.center = self.points.last!
         
-    }
-    
-    // returns the width of a given UILabel
-    func findWidthOfEachLabel(label: UILabel) -> CGFloat {
-        let width = label.text?.size(withAttributes:[.font: label.font as Any]).width ?? 30
-        return width
-    }
-    
-    func createRow() {
-        
-        rowWidth = 0.0
-        labelWidths = labels.compactMap({ label in
-            label.constraints.forEach({ $0.isActive = false })
-            let width = findWidthOfEachLabel(label: label)
-            rowWidth += width
-            return width
-        })
-        initialLabelWidth = labelWidths.first ?? .zero
-        let parentWidth = UIScreen.main.bounds.width
-        initialPoint.x = (parentWidth - rowWidth)/2 - labelWidths[0]/2
-        initialPoint.y = view.center.y - 20
-        let topLeft: CGPoint = .init(x: (parentWidth - rowWidth)/2, y: initialPoint.y)
-        positionLabels(rowLabels: labels, rowStartPoint: topLeft)
-        
-    }
-    
-    func positionLabels(rowLabels: [UILabel], rowStartPoint: CGPoint) {
-        var count = 0
-        var deltaX = rowStartPoint.x
-        rowLabels.enumerated().forEach { index, label in
-            label.frame = CGRect(x: deltaX, y: rowStartPoint.y , width: labelWidths[index], height: 20)
-            deltaX = deltaX + 8 + labelWidths[index]
-            view.addSubview(label)
-        }
     }
 }
 
